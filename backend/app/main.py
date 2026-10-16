@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, catalogos, jugadores
+from app.api import auth, catalogos, jugadores, registro
 from app.core.config import get_settings
 
 
@@ -24,6 +24,7 @@ def crear_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(catalogos.router)
     app.include_router(jugadores.router)
+    app.include_router(registro.router)
 
     @app.get("/salud", tags=["sistema"])
     def salud():

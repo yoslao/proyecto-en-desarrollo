@@ -48,6 +48,15 @@ K-means (perfiles descriptivos, no predictivo) + calculadora determinista de ind
 - No volver a sembrar `--dev` sobre `voleyia` (los J-01… chocarían con los reales); para pruebas manuales usar otra BD (`voleyia_scratch`).
 - Quedan 30 resultados atípicos `pendiente_confirmacion` y 13 fechas de nacimiento pendientes.
 
+## Fase 3 — registro e indicadores (hechos)
+- Solo el **entrenador** registra tests/sesiones/bienestar y consulta `carga`/`indicadores`/atípicos; el admin solo lista `jornadas` y catálogos (pruebas, umbrales). Todo registro exige jugador activo y con consentimiento (422 si no).
+- `POST /jugadores/{id}/tests` y `POST /jornadas` buscan o crean la jornada por (fecha, momento); lote atómico; errores por celda en `detail.errores`; duplicado → 409. Disparan `riesgo_hooks.programar_evaluaciones` (segundo plano); la Fase 5 registra su callback con `registrar_callback`.
+- Atípicos (IQR por prueba y jornada, n≥4) → `pendiente_confirmacion`, excluidos de indicadores hasta `PATCH /resultados/confirmacion` (en bloque) o `PUT /resultados/{id}` (corrige y confirma). Nunca se toca un resultado ya `confirmado`.
+- `PATCH /jornadas/{id}/momento` reclasifica (bitácora); pasar a 'pre' una jornada migrada exige `confirmar_advertencia=true` (409 `advertencia_migracion`).
+- Calculadora (`analytics/indicadores.py`) es la única que escribe `indicador_carga_semanal`; recalcula TODAS las semanas del jugador en cada alta/edición. Semana sin RPE ni CMJ no genera fila. Registros migrados (RPE NULL) no generan carga.
+- **Variaciones con signo de desempeño: positivo = mejora** (sprint: bajar el tiempo es +). Al armar el contexto del LLM (Fase 5) etiquetarlo así y ajustar el ejemplo de `/prompts`.
+- Umbrales de disparo: ACWR > ACWR_ALTO, caída CMJ > CAIDA_CMJ_PCT, bienestar < BIENESTAR_BAJO. Bienestar: los 4 ítems orientados 5 = mejor (índice 4-20).
+
 ## Convenciones
 - Marcas de tiempo (DATETIME) se guardan en **UTC** (`app.core.security.utcnow`); las fechas de negocio (`DATE`) son locales de Perú.
 - Columnas generadas de MariaDB (`srpe`, `indice_bienestar`, `es_alerta`) no admiten NOT NULL: son nullable en el esquema.
