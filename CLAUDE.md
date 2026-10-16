@@ -38,6 +38,10 @@ K-means (perfiles descriptivos, no predictivo) + calculadora determinista de ind
 - Objetivo prioritario lo elige el entrenador (sugerido: menor percentil).
 
 ## Convenciones
+- Marcas de tiempo (DATETIME) se guardan en **UTC** (`app.core.security.utcnow`); las fechas de negocio (`DATE`) son locales de Perú.
+- Columnas generadas de MariaDB (`srpe`, `indice_bienestar`, `es_alerta`) no admiten NOT NULL: son nullable en el esquema.
+- Pruebas contra MariaDB real (`voleyia_test`, creada por conftest con la migración); requieren el contenedor `db` arriba. En esta máquina el puerto 3306 está ocupado: `.env` usa DB_PORT=3307.
+- Escribir archivos con Write/Edit (los heredocs largos de bash fallan con comillas).
 - Código y esquema en español (tablas/columnas según la spec); identificadores Python en snake_case. Interfaz en español (Perú), fechas dd/mm/aaaa.
 - Permisos verificados en backend, no solo ocultando botones. Bitácora de auditoría solo-inserción.
 - Tests con pytest; OpenRouter siempre mockeado. Ruff + black (línea 100) en backend; eslint + prettier en frontend.

@@ -2,17 +2,26 @@
 
 Sistema web de recomendación de entrenamiento con IA para la selección universitaria masculina de voleibol (PFC, Ingeniería de Sistemas, UCSM). **La IA recomienda, el entrenador decide.**
 
-> Estado: Fase 0 (estructura). Este README se completará en la Fase 8.
+> Estado: Fase 1 (modelos, migración, semillas y autenticación). Este README se completará en la Fase 8.
 
 ## Requisitos
 - Docker Desktop, Python 3.11+, Node 20+.
 
 ## Puesta en marcha (desarrollo)
 ```bash
-cp .env.example .env     # completar contraseñas y claves
-docker compose up -d db  # MariaDB 10.11
+cp .env.example .env          # completar contraseñas y claves (si el puerto 3306 está ocupado, usar DB_PORT=3307)
+docker compose up -d db       # MariaDB 10.11
+
+cd backend
+python -m venv .venv
+.venv/Scripts/pip install -e ".[dev]"     # Linux/Mac: .venv/bin/pip
+.venv/Scripts/alembic upgrade head        # migraciones
+.venv/Scripts/python -m app.seed --dev    # catálogos + usuarios y 12 jugadores FICTICIOS (imprime las contraseñas una vez)
+.venv/Scripts/uvicorn app.main:app --reload   # API en http://localhost:8000/docs
+.venv/Scripts/python -m pytest            # pruebas (usan la base voleyia_test)
 ```
-(Migraciones, semilla, ETL y frontend: se documentarán en sus fases.)
+Usuario real: `python -m app.seed usuario --correo X --nombre "Y" --rol entrenador`.
+(ETL y frontend: se documentarán en sus fases.)
 
 ## Modelo de consentimiento informado (borrador)
 > Yo, ____________________ (DNI ________), declaro haber sido informado/a de que, en el marco del proyecto "VoleyIA Coach", se registrarán mis datos de evaluación física (sprint 20 m, Course Navette, saltos, carga de entrenamiento y bienestar), así como mi posición, edad, talla y peso, con la finalidad de personalizar mi entrenamiento y monitorear mi carga, conforme a la Ley N.º 29733.
