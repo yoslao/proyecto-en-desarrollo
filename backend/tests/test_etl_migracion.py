@@ -63,13 +63,17 @@ def _plan(archivos, fecha_hoy=None, con_decisiones=False):
 def _cli(archivos, *extra):
     return main(
         [
-            "--archivo", str(archivos["excel"]),
-            "--consentimientos", str(archivos["cons"]),
-            "--reporte", str(archivos["tmp"] / "reporte.md"),
-            "--mapa", str(archivos["tmp"] / "mapa.csv"),
+            "--archivo",
+            str(archivos["excel"]),
+            "--consentimientos",
+            str(archivos["cons"]),
+            "--reporte",
+            str(archivos["tmp"] / "reporte.md"),
+            "--mapa",
+            str(archivos["tmp"] / "mapa.csv"),
             *extra,
         ]
-    )  # fmt: skip
+    )
 
 
 def _conteos(db):

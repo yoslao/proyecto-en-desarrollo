@@ -34,16 +34,28 @@ POSICION = {
 PESO = {"A": 65, "B": 79, "C": 101, "D": 56, "E": 71, "F": 72, "G": 67, "H": 76}
 
 COLS_SALTO = [
-    "Nombre del deportista", "edad", "talla", "peso (kg)",
-    "salto sin previo calentamiento", "salto despues de un breve calentamiento",
-    "salto despues de una activacion intensa", "salto despues de actividad fisica intensa ",
+    "Nombre del deportista",
+    "edad",
+    "talla",
+    "peso (kg)",
+    "salto sin previo calentamiento",
+    "salto despues de un breve calentamiento",
+    "salto despues de una activacion intensa",
+    "salto despues de actividad fisica intensa ",
     "Posiicion de campo",
-]  # fmt: skip
+]
 COLS_VEL = [
-    "Nombre del deportista", "edad", "talla", "peso (kg)", "Sprint 20m (tiempo)",
-    "Velocidad (m/s)", "Palier Course Navette", "VO2max estimado (ml/kg/min)",
-    "Tiempo de entrenamiento efectivo (min)", "Posiicion de campo",
-]  # fmt: skip
+    "Nombre del deportista",
+    "edad",
+    "talla",
+    "peso (kg)",
+    "Sprint 20m (tiempo)",
+    "Velocidad (m/s)",
+    "Palier Course Navette",
+    "VO2max estimado (ml/kg/min)",
+    "Tiempo de entrenamiento efectivo (min)",
+    "Posiicion de campo",
+]
 
 
 def _talla(k: str, hoja_idx: int) -> float:
@@ -69,8 +81,19 @@ def _hoja_salto(wb, nombre, titulo, idx, ausente=None, atipico=True):
         if idx % 2:  # variantes de escritura entre hojas
             nombre_excel = nombre_excel.upper() + " "
         ws.append([nombre_excel, EDAD[k], _talla(k, idx), f"{PESO[k]}kg", *vals, POSICION[k]])
-    ws.append(["HORA DE LA TOMA DE LOS DATOS", None, None, None,
-               "7:00PM a 7:15 PM", "7:30 a 7:45", "8:30 a 8:45", "9:00 a 9:15", None])  # fmt: skip
+    ws.append(
+        [
+            "HORA DE LA TOMA DE LOS DATOS",
+            None,
+            None,
+            None,
+            "7:00PM a 7:15 PM",
+            "7:30 a 7:45",
+            "8:30 a 8:45",
+            "9:00 a 9:15",
+            None,
+        ]
+    )
 
 
 def _hoja_vel(wb, nombre, titulo, idx, vel_mala=False):
@@ -86,8 +109,18 @@ def _hoja_vel(wb, nombre, titulo, idx, vel_mala=False):
         vel = round(20 / t, 2)
         if vel_mala and k == "B":
             vel = round(vel + 0.3, 2)
-        fila = [NOMBRES[k], edad, _talla(k, idx), f"{PESO[k]}kg", f"{t:.2f}s", f"{vel:.2f}m/s",
-                palier, f"{vo2:.1f}", f"{70 + n}min", POSICION[k].strip()]  # fmt: skip
+        fila = [
+            NOMBRES[k],
+            edad,
+            _talla(k, idx),
+            f"{PESO[k]}kg",
+            f"{t:.2f}s",
+            f"{vel:.2f}m/s",
+            palier,
+            f"{vo2:.1f}",
+            f"{70 + n}min",
+            POSICION[k].strip(),
+        ]
         if k == "E" and idx == 2:  # ausencia
             fila[4:9] = ["-"] * 5
         ws.append(fila)
@@ -95,8 +128,20 @@ def _hoja_vel(wb, nombre, titulo, idx, vel_mala=False):
     ws.append(
         ["HORA - COURSE NAVETTE", None, None, None, None, None, "7:15 PM a 7:45 PM"] + [None] * 3
     )
-    ws.append(["HORA - REGISTRO ENTRENAMIENTO", None, None, None, None, None, None, None,
-               "5:30 PM a 7:00 PM", None])  # fmt: skip
+    ws.append(
+        [
+            "HORA - REGISTRO ENTRENAMIENTO",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            "5:30 PM a 7:00 PM",
+            None,
+        ]
+    )
 
 
 def crear_excel_ficticio(ruta: Path) -> Path:

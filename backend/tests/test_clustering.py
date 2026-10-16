@@ -172,9 +172,12 @@ def test_toma_la_ultima_medicion_dentro_del_rango(client, h_entrenador, h_admin,
     ids = _equipo(client, h_entrenador, jugador_payload)
     # 1.ª jornada: velocidad y resistencia; 2.ª y 3.ª: salto en fechas distintas (como el Excel)
     _registrar(
-        client, h_entrenador, ids, fecha="2026-09-01",
+        client,
+        h_entrenador,
+        ids,
+        fecha="2026-09-01",
         valores=lambda j, pos, p: {"SPRINT_20M": p["SPRINT_20M"], "NAVETTE": p["NAVETTE"]},
-    )  # fmt: skip
+    )
 
     def peores(j, pos, p):
         return {"SALTO_AI": [x - 5 for x in p["SALTO_AI"]]}
@@ -225,12 +228,16 @@ def test_principal_sin_cmj_ni_sj_explica_que_falta(client, h_admin, equipo):
 def test_principal_funciona_con_cmj_y_sj(client, h_entrenador, h_admin, jugador_payload):
     ids = _equipo(client, h_entrenador, jugador_payload)
     _registrar(
-        client, h_entrenador, ids,
+        client,
+        h_entrenador,
+        ids,
         valores=lambda j, pos, p: {
-            "SPRINT_20M": p["SPRINT_20M"], "NAVETTE": p["NAVETTE"],
-            "CMJ": [x - 4 for x in (p["SALTO_AI"] * 3)][:3], "SJ": [x - 8 for x in p["SALTO_AI"]],
+            "SPRINT_20M": p["SPRINT_20M"],
+            "NAVETTE": p["NAVETTE"],
+            "CMJ": [x - 4 for x in (p["SALTO_AI"] * 3)][:3],
+            "SJ": [x - 8 for x in p["SALTO_AI"]],
         },
-    )  # fmt: skip
+    )
     c = client.post("/analitica/clustering", json={"modo": "principal"}, headers=h_admin).json()
     assert c["variables"] == ["SPRINT_20M", "NAVETTE", "CMJ", "SJ"] and c["k"] == 2
     assert all(a["jornadas_usadas"]["CMJ"]["fecha"] == "2026-09-07" for a in c["asignaciones"])
@@ -241,9 +248,13 @@ def test_jugadores_con_datos_incompletos_quedan_sin_asignar(
 ):
     ids = _equipo(client, h_entrenador, jugador_payload)
     _registrar(
-        client, h_entrenador, ids,
-        valores=lambda j, pos, p: {k: v for k, v in p.items() if not (j == ids[3] and k == "NAVETTE")},
-    )  # fmt: skip
+        client,
+        h_entrenador,
+        ids,
+        valores=lambda j, pos, p: {
+            k: v for k, v in p.items() if not (j == ids[3] and k == "NAVETTE")
+        },
+    )
     c = _ejecutar(client, h_admin).json()
     assert len(c["asignaciones"]) == 11
     assert c["sin_asignar"] == [
@@ -295,9 +306,11 @@ def test_atipicos_pendientes_no_entran_al_clustering(
 ):
     ids = _equipo(client, h_entrenador, jugador_payload)
     _registrar(
-        client, h_entrenador, ids,
+        client,
+        h_entrenador,
+        ids,
         valores=lambda j, pos, p: {**p, "SALTO_AI": [89.0]} if j == ids[0] else p,
-    )  # fmt: skip
+    )
     c = _ejecutar(client, h_admin).json()
     # su salto es un atípico pendiente → excluido → queda sin asignar
     assert [s["faltantes"] for s in c["sin_asignar"]] == [["SALTO_AI"]]

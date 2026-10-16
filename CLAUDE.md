@@ -66,6 +66,16 @@ K-means (perfiles descriptivos, no predictivo) + calculadora determinista de ind
 - Con los datos migrados no hay CMJ ni SJ: el modo `principal` falla con 422 explicativo; usar `exploratorio` (SPRINT_20M, NAVETTE, SALTO_AI). Ejecución real nº 1 (exploratorio): k=4, silueta 0.349, un grupo unitario; J-07 sin asignar por atípico pendiente.
 - Migración 0002: `ejecucion_clustering.diagnostico` (JSON) y fechas desde/hasta como DATE.
 
+## Fase 5 — IA (hechos)
+- Cliente `app/ai/openrouter_client.py`: 15 s por llamada; JSON/esquema inválido → 1 reintento → modelo de respaldo; 5xx/timeout/red → respaldo directo. 502 si hubo respuestas pero ninguna válida; 503 si ningún modelo respondió o no hay clave/modelos. Sin `response_format` soportado: reintenta sin él y extrae el JSON del texto. Registra tokens/costo de `usage` (pide `usage.include`). NUNCA registra ni guarda el prompt (solo hash SHA-256 en `llamada_ia`).
+- Modelos: `configuracion_sistema` (IA_MODELO_PRINCIPAL/RESPALDO) y, si están vacíos, variables de entorno. Clave solo en `.env`. `proveedor.fijar_cliente()` para mocks; conftest pone un cliente SIN clave en todas las pruebas (jamás llaman a OpenRouter).
+- Plantillas `/prompts/rutina_v1.md` y `riesgo_v1.md` (versionadas, con 2 ejemplos few-shot ficticios J-9x); `app/ai/prompts.py` las carga. Variaciones etiquetadas «positivo = mejora».
+- Seudonimizador (`app/ai/seudonimizador.py`): lista blanca de claves, cadenas con formato cerrado, `"no disponible"` para nulos, y guardia final que bloquea (ErrorSeudonimizacion) si aparece un nombre o universidad. Nunca texto libre (observaciones, descripciones, comentarios).
+- Rutinas: `POST /jugadores/{id}/rutinas` → 202 + `id_tarea`; `GET /tareas/{id}` (progreso; devuelve 502/503 si falló). Validación de seguridad (máx. sesiones/semana y minutos/sesión, nº de semanas, un día por sesión) integrada como validador del cliente → rechaza y regenera. Nace 'propuesta'; `PATCH /rutinas/{id}/aprobacion` exige ambas calificaciones 1-5 (también al rechazar); no se revisa dos veces.
+- Riesgo: se evalúa en segundo plano al registrar tests (gancho `riesgo_hooks`) y con `POST /riesgo/cierre-semana`. `GET /alertas` (medio/alto, ambos roles, solo códigos), `GET /evaluaciones-riesgo/pendientes` (bandeja con TODOS los niveles, solo entrenador), `PATCH /evaluaciones-riesgo/{id}/revision` (confirmar|descartar, solo entrenador).
+- PoC: `python -m app.ai.poc [--modelos a,b] [--simulado] [--registrar-bd]` → `data/processed/poc_resultados.csv` (latencia, cumplimiento de esquema, costo, consistencia; riesgo ×3).
+- Pruebas: NO ejecutar dos pytest a la vez (comparten `voleyia_test`; bloquea por metadata lock). Suite completa ≈ 7-8 min.
+
 ## Convenciones
 - Marcas de tiempo (DATETIME) se guardan en **UTC** (`app.core.security.utcnow`); las fechas de negocio (`DATE`) son locales de Perú.
 - Columnas generadas de MariaDB (`srpe`, `indice_bienestar`, `es_alerta`) no admiten NOT NULL: son nullable en el esquema.

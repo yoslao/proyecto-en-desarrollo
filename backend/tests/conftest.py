@@ -62,6 +62,19 @@ def datos_base(base_de_datos):
         db.commit()
 
 
+@pytest.fixture(autouse=True)
+def sin_proveedor_real():
+    """Ninguna prueba debe llamar a OpenRouter: cliente sin clave (cada prueba puede poner un mock)."""
+    from app.ai import proveedor
+    from app.ai.openrouter_client import OpenRouterClient
+    from app.services import tareas
+
+    proveedor.fijar_cliente(OpenRouterClient(""))
+    tareas.limpiar()
+    yield
+    proveedor.fijar_cliente(None)
+
+
 @pytest.fixture
 def client():
     return TestClient(app)

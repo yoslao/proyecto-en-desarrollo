@@ -85,9 +85,12 @@ def test_fecha_futura_se_rechaza(client, h_entrenador, jug):
 
 def test_sin_consentimiento_no_se_registra_nada(client, h_entrenador, jugador_payload, db):
     j = _nuevo(
-        client, h_entrenador, jugador_payload,
-        consentimiento_informado=False, fecha_consentimiento=None,
-    )  # fmt: skip
+        client,
+        h_entrenador,
+        jugador_payload,
+        consentimiento_informado=False,
+        fecha_consentimiento=None,
+    )
     r = _tests(client, h_entrenador, j, {"SPRINT_20M": [3.1]})
     assert r.status_code == 422 and "consentimiento" in str(r.json()).lower()
     assert db.scalar(select(func.count()).select_from(ResultadoPrueba)) == 0
@@ -230,15 +233,14 @@ def test_cambio_de_momento_queda_en_bitacora(client, h_entrenador, jug, db):
 
 
 def test_registrar_tests_dispara_la_evaluacion_de_riesgo_en_segundo_plano(
-    client, h_entrenador, jug
+    client, h_entrenador, jug, monkeypatch
 ):
     llamadas = []
-    riesgo_hooks.limpiar_callbacks()
-    riesgo_hooks.registrar_callback(lambda id_j, origen: llamadas.append((id_j, origen)))
-    try:
-        _tests(client, h_entrenador, jug, {"SPRINT_20M": [3.1]})
-    finally:
-        riesgo_hooks.limpiar_callbacks()
+    # lista aislada: no se pierde el callback real registrado por la aplicación
+    monkeypatch.setattr(
+        riesgo_hooks, "_callbacks", [lambda id_j, origen: llamadas.append((id_j, origen))]
+    )
+    _tests(client, h_entrenador, jug, {"SPRINT_20M": [3.1]})
     assert llamadas == [(jug, "nuevo_test")]
 
 
@@ -392,9 +394,12 @@ def test_bienestar_duplicado_y_edicion(client, h_entrenador, jug):
 
 def test_bienestar_sin_consentimiento(client, h_entrenador, jugador_payload):
     j = _nuevo(
-        client, h_entrenador, jugador_payload,
-        consentimiento_informado=False, fecha_consentimiento=None,
-    )  # fmt: skip
+        client,
+        h_entrenador,
+        jugador_payload,
+        consentimiento_informado=False,
+        fecha_consentimiento=None,
+    )
     assert (
         client.post(f"/jugadores/{j}/bienestar", json=_bien(), headers=h_entrenador).status_code
         == 422
@@ -404,17 +409,40 @@ def test_bienestar_sin_consentimiento(client, h_entrenador, jugador_payload):
 # ------------------------------------------------------------------ permisos por rol
 def test_el_administrador_no_registra_ni_consulta_carga(client, h_admin, h_entrenador, jug):
     assert _tests(client, h_admin, jug, {"SPRINT_20M": [3.1]}).status_code == 403
-    assert client.post("/jornadas", json={"fecha": "2026-09-07", "momento": "pre",
-                                          "resultados": [{"id_jugador": jug, "pruebas": {"CMJ": [30]}}]},
-                       headers=h_admin).status_code == 403  # fmt: skip
-    assert client.post(f"/jugadores/{jug}/sesiones",
-                       json={"fecha": "2026-09-07", "duracion_efectiva_min": 80, "rpe": 7},
-                       headers=h_admin).status_code == 403  # fmt: skip
+    assert (
+        client.post(
+            "/jornadas",
+            json={
+                "fecha": "2026-09-07",
+                "momento": "pre",
+                "resultados": [{"id_jugador": jug, "pruebas": {"CMJ": [30]}}],
+            },
+            headers=h_admin,
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            f"/jugadores/{jug}/sesiones",
+            json={"fecha": "2026-09-07", "duracion_efectiva_min": 80, "rpe": 7},
+            headers=h_admin,
+        ).status_code
+        == 403
+    )
     assert (
         client.post(f"/jugadores/{jug}/bienestar", json=_bien(), headers=h_admin).status_code == 403
     )
-    assert client.post("/sesiones", json={"fecha": "2026-09-07", "registros": [
-        {"id_jugador": jug, "duracion_efectiva_min": 80, "rpe": 7}]}, headers=h_admin).status_code == 403  # fmt: skip
+    assert (
+        client.post(
+            "/sesiones",
+            json={
+                "fecha": "2026-09-07",
+                "registros": [{"id_jugador": jug, "duracion_efectiva_min": 80, "rpe": 7}],
+            },
+            headers=h_admin,
+        ).status_code
+        == 403
+    )
     for ruta in (
         f"/jugadores/{jug}/carga",
         f"/jugadores/{jug}/indicadores",
@@ -438,8 +466,13 @@ def test_el_administrador_puede_listar_jornadas_y_catalogos(client, h_admin):
 
 
 def test_sin_token_todo_da_401(client):
-    for metodo, ruta in [("post", "/jornadas"), ("post", "/sesiones"), ("get", "/jornadas"),
-                         ("get", "/jugadores/1/carga"), ("get", "/resultados/pendientes")]:  # fmt: skip
+    for metodo, ruta in [
+        ("post", "/jornadas"),
+        ("post", "/sesiones"),
+        ("get", "/jornadas"),
+        ("get", "/jugadores/1/carga"),
+        ("get", "/resultados/pendientes"),
+    ]:
         assert getattr(client, metodo)(ruta).status_code == 401
 
 
