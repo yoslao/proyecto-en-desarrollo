@@ -290,3 +290,53 @@ def test_sin_catalogos_no_corre(archivos, db):
     db.execute(text("SET FOREIGN_KEY_CHECKS=1"))
     db.commit()
     assert _cli(archivos, "--dry-run") == 2
+
+
+# ------------------------------------------------------------------ decisiones de calidad
+def _decisiones_extra(archivos, lineas):
+    ruta = archivos["tmp"] / "decisiones_extra.csv"
+    ruta.write_text("tipo,clave,valor\n" + "\n".join(lineas) + "\n", encoding="utf-8")
+    archivos["dec"] = ruta
+    return ruta
+
+
+def _tallas_de(plan, clave):
+    return {a.talla for a in plan.antropometrias if a.clave == clave}
+
+
+def test_talla_se_deja_tal_cual_sin_decision(archivos):
+    _decisiones_extra(archivos, ["posicion,opuesto-central,central"])
+    plan = _plan(archivos, fecha_hoy=date(2026, 8, 15), con_decisiones=True)
+    assert len(_tallas_de(plan, clave_nombre(NOMBRES["C"]))) == 3
+
+
+def test_talla_unificada_a_la_mas_frecuente(archivos):
+    # Gamma: 1.88 (2 hojas), 1.87 (2 hojas), 1.86 (1 hoja) → empate resuelto con 1.87
+    _decisiones_extra(
+        archivos, ["posicion,opuesto-central,central", "talla,unificar,moda", "talla,empate,1.87"]
+    )
+    plan = _plan(archivos, fecha_hoy=date(2026, 8, 15), con_decisiones=True)
+    assert _tallas_de(plan, clave_nombre(NOMBRES["C"])) == {Decimal("1.87")}
+    assert any("RESUELTO" in p.detalle for p in plan.problemas if p.categoria == "talla")
+
+
+def test_talla_moda_sin_empate(archivos):
+    _decisiones_extra(archivos, ["posicion,opuesto-central,central", "talla,unificar,moda"])
+    plan = _plan(archivos, fecha_hoy=date(2026, 8, 15), con_decisiones=True)
+    # con empate y sin valor de desempate no se adivina
+    assert len(_tallas_de(plan, clave_nombre(NOMBRES["C"]))) == 3
+
+
+def test_derivada_aceptada_no_cuenta_como_fuera_de_tolerancia(archivos, db):
+    _decisiones_extra(
+        archivos, ["posicion,opuesto-central,central", "derivada,17 Agosto!F4,aceptar"]
+    )
+    assert (
+        _cli(
+            archivos, "--dry-run", "--decisiones", str(archivos["dec"]), "--fecha-hoy", "2026-09-07"
+        )
+        == 0
+    )
+    reporte = (archivos["tmp"] / "reporte.md").read_text(encoding="utf-8")
+    assert "0 valor(es) fuera de tolerancia" in reporte
+    assert "Aceptadas por decisión" in reporte

@@ -44,7 +44,9 @@ K-means (perfiles descriptivos, no predictivo) + calculadora determinista de ind
 - Integridad (conteos/sumas/muestra) controla el commit; las discrepancias en velocidad/VO₂máx del Excel son hallazgos de calidad, no bloquean.
 - Consentimiento del CSV es del 16/10/2026, posterior a las mediciones (21/08–07/10): se carga y se advierte en el reporte (consentimiento retroactivo).
 - Los atípicos IQR se concentran en los jugadores de menor salto; deben confirmarse en bloque en la Fase 3 (endpoint de confirmación).
-- Los datos reales no deben mezclarse con la semilla `--dev` (códigos J-01… chocarían): usar BD distinta.
+- **Carga real hecha (16/10/2026)** en la BD `voleyia` tras borrar los 12 ficticios (decisión del usuario): 13 jugadores J-01…J-13, 21 jornadas 'seguimiento', 806 resultados, 273 antropometrías, 111 registros de sesión. Hoja «hoy» = 07/09/2026. Decisiones en `data/raw/decisiones.csv`: opuesto-central→central, 2 nombres corregidos, talla unificada a la moda (empate→1.87), velocidad F15 de «31 Agosto» aceptada (se usa el tiempo). Consentimiento de los 13 = sí.
+- No volver a sembrar `--dev` sobre `voleyia` (los J-01… chocarían con los reales); para pruebas manuales usar otra BD (`voleyia_scratch`).
+- Quedan 30 resultados atípicos `pendiente_confirmacion` y 13 fechas de nacimiento pendientes.
 
 ## Convenciones
 - Marcas de tiempo (DATETIME) se guardan en **UTC** (`app.core.security.utcnow`); las fechas de negocio (`DATE`) son locales de Perú.

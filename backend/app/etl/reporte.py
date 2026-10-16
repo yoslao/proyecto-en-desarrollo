@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.analytics.fisiologia import velocidad_sprint_ms, vo2max_leger
 from app.etl.carga import ResultadoCarga
+from app.etl.limpieza import normalizar_texto
 from app.etl.modelos import Plan
 from app.models import (
     Jugador,
@@ -332,6 +333,7 @@ def generar_reporte(
     # ------------------------------------------------------------------ 4. Derivadas
     comparadas_v = comparadas_vo2 = 0
     fuera: list[list] = []
+    aceptadas: list[list] = []
     max_dv = max_dvo2 = 0.0
     sin_vo2 = 0
     for fj in plan.filas_derivadas:
@@ -343,17 +345,19 @@ def generar_reporte(
             comparadas_v += 1
             max_dv = max(max_dv, d)
             if d > TOLERANCIA_DERIVADAS:
-                fuera.append(
-                    [
-                        fj.hoja,
-                        ref,
-                        "Velocidad (m/s)",
-                        fj.celda_velocidad,
-                        fj.velocidad_excel,
-                        f"{calc:.2f}",
-                        f"{d:.2f}",
-                    ]
-                )
+                fila_d = [
+                    fj.hoja,
+                    ref,
+                    "Velocidad (m/s)",
+                    fj.celda_velocidad,
+                    fj.velocidad_excel,
+                    f"{calc:.2f}",
+                    f"{d:.2f}",
+                ]
+                if (normalizar_texto(fj.hoja), fj.celda_velocidad) in plan.derivadas_aceptadas:
+                    aceptadas.append(fila_d)
+                else:
+                    fuera.append(fila_d)
         if "NAVETTE" in v and fj.edad is not None:
             if fj.vo2_excel is None:
                 sin_vo2 += 1
@@ -388,9 +392,15 @@ def generar_reporte(
         "(es un hallazgo sobre los datos de origen, no un fallo de la carga).",
         "",
     ]
+    cab_d = ["Hoja", "Jugador", "Variable", "Celda", "Excel", "Recalculado", "Dif."]
     if fuera:
+        L += [_tabla(cab_d, fuera), ""]
+    if aceptadas:
         L += [
-            _tabla(["Hoja", "Jugador", "Variable", "Celda", "Excel", "Recalculado", "Dif."], fuera),
+            "Aceptadas por decisión del investigador (se usa el valor recalculado; la velocidad "
+            "no se almacena, se deriva siempre del tiempo del sprint):",
+            "",
+            _tabla(cab_d, aceptadas),
             "",
         ]
 

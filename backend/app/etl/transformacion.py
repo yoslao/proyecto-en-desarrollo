@@ -69,11 +69,17 @@ class Decisiones:
 
     posicion,opuesto-central,opuesto        (texto del Excel → posición del catálogo)
     nombre,Quispe Riveros Elard Edwin,Elard Edwin|Quispe Riveros   (nombres|apellidos)
+    talla,unificar,moda       (una sola talla por jugador: la que aparece en más hojas)
+    talla,empate,1.87         (valor a usar si hay empate entre las más frecuentes)
+    derivada,31 Agosto!F15,aceptar   (se acepta el valor recalculado de una celda derivada)
     """
 
     def __init__(self) -> None:
         self.posiciones: dict[str, str] = {}
         self.nombres: dict[str, tuple[str, str]] = {}
+        self.unificar_talla = False
+        self.talla_empate: Decimal | None = None
+        self.derivadas_aceptadas: set[tuple[str, str]] = set()
 
     @classmethod
     def leer(cls, ruta: Path | None) -> "Decisiones":
@@ -86,6 +92,13 @@ class Decisiones:
                 clave, valor = (fila.get("clave") or "").strip(), (fila.get("valor") or "").strip()
                 if tipo == "posicion" and clave and valor:
                     d.posiciones[normalizar_texto(clave)] = normalizar_texto(valor)
+                elif tipo == "talla" and normalizar_texto(clave) == "unificar":
+                    d.unificar_talla = normalizar_texto(valor) in {"moda", "si", "1"}
+                elif tipo == "talla" and normalizar_texto(clave) == "empate" and valor:
+                    d.talla_empate = Decimal(valor.replace(",", "."))
+                elif tipo == "derivada" and "!" in clave:
+                    hoja, celda = clave.rsplit("!", 1)
+                    d.derivadas_aceptadas.add((normalizar_texto(hoja), celda.strip().upper()))
                 elif tipo == "nombre" and clave and "|" in valor:
                     nombres, apellidos = (x.strip() for x in valor.split("|", 1))
                     d.nombres[clave_nombre(clave)] = (
@@ -329,14 +342,31 @@ def construir_plan(
     for clave, por_valor in tallas.items():
         if len(por_valor) > 1:
             detalle = "; ".join(
-                f"{v} m en {', '.join(hs[:3])}{'…' if len(hs) > 3 else ''} ({len(hs)} hoja(s))"
+                f"{v} m en {len(hs)} hoja(s) ({', '.join(hs[:3])}{'…' if len(hs) > 3 else ''})"
                 for v, hs in sorted(por_valor.items())
             )
+            elegida = None
+            if decisiones.unificar_talla:
+                conteo = {v: len(hs) for v, hs in por_valor.items()}
+                maximo = max(conteo.values())
+                empatadas = [v for v, c in conteo.items() if c == maximo]
+                if len(empatadas) == 1:
+                    elegida = empatadas[0]
+                elif decisiones.talla_empate in empatadas:
+                    elegida = decisiones.talla_empate
+            if elegida is not None:
+                for a in antropos:
+                    if a.clave == clave:
+                        a.talla = elegida
+                resolucion = (
+                    f"RESUELTO por decisión: talla unificada a {elegida} m (la más frecuente)."
+                )
+            else:
+                resolucion = "Se cargan tal cual por fecha; revisar cuál es la correcta."
             problemas.append(
                 Problema(
                     "talla",
-                    f"{ref_jugador(clave)}: talla inconsistente entre fechas: {detalle}. "
-                    f"Se cargan tal cual por fecha; revisar cuál es la correcta.",
+                    f"{ref_jugador(clave)}: talla inconsistente entre fechas: {detalle}. {resolucion}",
                 )
             )
 
@@ -350,4 +380,5 @@ def construir_plan(
         problemas=problemas,
         hojas_omitidas=omitidas,
         filas_derivadas=derivadas,
+        derivadas_aceptadas=decisiones.derivadas_aceptadas,
     )

@@ -25,7 +25,8 @@ Usuario real: `python -m app.seed usuario --correo X --nombre "Y" --rol entrenad
 ## ETL del Excel (Fase 2)
 Coloque en `data/raw/` (ignorado por git): el Excel original, `consentimientos.csv`
 (`nombre_normalizado,consentimiento_informado,fecha_consentimiento`) y, opcionalmente, `decisiones.csv`
-(`tipo,clave,valor`: `posicion,opuesto-central,opuesto` o `nombre,<nombre completo>,<nombres>|<apellidos>`).
+(`tipo,clave,valor`): `posicion,opuesto-central,central` · `nombre,<nombre completo>,<nombres>|<apellidos>` ·
+`talla,unificar,moda` + `talla,empate,1.87` · `derivada,31 Agosto!F15,aceptar`.
 ```bash
 cd backend
 # 1) Ensayo: ejecuta todo y valida, pero revierte la transacción

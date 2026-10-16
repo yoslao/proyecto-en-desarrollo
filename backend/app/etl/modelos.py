@@ -122,3 +122,6 @@ class Plan:
     problemas: list[Problema]
     hojas_omitidas: list[str]
     filas_derivadas: list[FilaJugador]  # filas de velocidad con datos para el chequeo VO2/velocidad
+    derivadas_aceptadas: set[tuple[str, str]] = field(
+        default_factory=set
+    )  # (hoja, celda) aceptadas
