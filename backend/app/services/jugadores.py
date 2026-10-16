@@ -38,7 +38,7 @@ def a_salida(j: Jugador) -> JugadorOut:
     )
 
 
-def _siguiente_codigo(db: Session) -> str:
+def siguiente_codigo(db: Session) -> str:
     maximo = db.scalar(select(func.max(cast(func.substr(Jugador.codigo_seudonimo, 3), Integer))))
     return f"J-{(maximo or 0) + 1:02d}"
 
@@ -98,7 +98,7 @@ def crear(db: Session, datos: JugadorIn) -> Jugador:
     if _existe_duplicado(db, datos):
         raise HTTPException(status.HTTP_409_CONFLICT, "Ya existe un jugador con ese nombre")
     for _ in range(3):  # reintento ante carrera por el código seudónimo
-        jugador = Jugador(codigo_seudonimo=_siguiente_codigo(db), **datos.model_dump())
+        jugador = Jugador(codigo_seudonimo=siguiente_codigo(db), **datos.model_dump())
         db.add(jugador)
         try:
             db.flush()

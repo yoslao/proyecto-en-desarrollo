@@ -2,7 +2,7 @@
 
 Sistema web de recomendación de entrenamiento con IA para la selección universitaria masculina de voleibol (PFC, Ingeniería de Sistemas, UCSM). **La IA recomienda, el entrenador decide.**
 
-> Estado: Fase 1 (modelos, migración, semillas y autenticación). Este README se completará en la Fase 8.
+> Estado: Fase 2 (ETL del Excel). Este README se completará en la Fase 8.
 
 ## Requisitos
 - Docker Desktop, Python 3.11+, Node 20+.
@@ -21,7 +21,23 @@ python -m venv .venv
 .venv/Scripts/python -m pytest            # pruebas (usan la base voleyia_test)
 ```
 Usuario real: `python -m app.seed usuario --correo X --nombre "Y" --rol entrenador`.
-(ETL y frontend: se documentarán en sus fases.)
+
+## ETL del Excel (Fase 2)
+Coloque en `data/raw/` (ignorado por git): el Excel original, `consentimientos.csv`
+(`nombre_normalizado,consentimiento_informado,fecha_consentimiento`) y, opcionalmente, `decisiones.csv`
+(`tipo,clave,valor`: `posicion,opuesto-central,opuesto` o `nombre,<nombre completo>,<nombres>|<apellidos>`).
+```bash
+cd backend
+# 1) Ensayo: ejecuta todo y valida, pero revierte la transacción
+.venv/Scripts/python -m app.etl.migrar_excel --archivo ../data/raw/datos_plandetesis_completo.xlsx     --consentimientos ../data/raw/consentimientos.csv --decisiones ../data/raw/decisiones.csv     --fecha-hoy AAAA-MM-DD --dry-run
+# 2) Carga real (misma orden sin --dry-run). Idempotente: repetirla no duplica datos.
+```
+Genera `data/processed/reporte_migracion.md` (solo códigos J-xx) y `data/processed/mapa_seudonimos.csv`
+(código ↔ nombre; contiene datos personales). Sin `--fecha-hoy` la hoja «hoy» se omite. Los jugadores sin
+consentimiento se crean sin sus mediciones. Se recomienda cargar los datos reales en una BD distinta de la de
+desarrollo (que lleva los 12 jugadores ficticios).
+
+(Frontend: se documentará en su fase.)
 
 ## Modelo de consentimiento informado (borrador)
 > Yo, ____________________ (DNI ________), declaro haber sido informado/a de que, en el marco del proyecto "VoleyIA Coach", se registrarán mis datos de evaluación física (sprint 20 m, Course Navette, saltos, carga de entrenamiento y bienestar), así como mi posición, edad, talla y peso, con la finalidad de personalizar mi entrenamiento y monitorear mi carga, conforme a la Ley N.º 29733.

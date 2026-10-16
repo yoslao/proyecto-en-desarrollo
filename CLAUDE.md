@@ -37,6 +37,15 @@ K-means (perfiles descriptivos, no predictivo) + calculadora determinista de ind
 - Tests de registro: `POST /jugadores/{id}/tests` recibe fecha+momento y busca/crea la jornada.
 - Objetivo prioritario lo elige el entrenador (sugerido: menor percentil).
 
+## ETL (Fase 2) — hechos del Excel real
+- 21 hojas (12 de salto, 9 de velocidad) y no solo las de la spec; el título trae la fecha («VIERNES 21 DE AGOSTO DEL 2026») y manda sobre el nombre de la hoja. «hoy» no tiene título: exige `--fecha-hoy`. Ausencias = «-».
+- Orden de nombres en el Excel: casi siempre «Apellido Apellido Nombre(s)»; regla por defecto = 2 primeras palabras apellidos; excepciones en `data/raw/decisiones.csv`. Emparejamiento por clave insensible al orden/tildes/mayúsculas.
+- Posición «opuesto-central» NO se mapea: el jugador no se carga hasta que haya decisión (`posicion,opuesto-central,<catálogo>`).
+- Integridad (conteos/sumas/muestra) controla el commit; las discrepancias en velocidad/VO₂máx del Excel son hallazgos de calidad, no bloquean.
+- Consentimiento del CSV es del 16/10/2026, posterior a las mediciones (21/08–07/10): se carga y se advierte en el reporte (consentimiento retroactivo).
+- Los atípicos IQR se concentran en los jugadores de menor salto; deben confirmarse en bloque en la Fase 3 (endpoint de confirmación).
+- Los datos reales no deben mezclarse con la semilla `--dev` (códigos J-01… chocarían): usar BD distinta.
+
 ## Convenciones
 - Marcas de tiempo (DATETIME) se guardan en **UTC** (`app.core.security.utcnow`); las fechas de negocio (`DATE`) son locales de Perú.
 - Columnas generadas de MariaDB (`srpe`, `indice_bienestar`, `es_alerta`) no admiten NOT NULL: son nullable en el esquema.
