@@ -57,6 +57,15 @@ K-means (perfiles descriptivos, no predictivo) + calculadora determinista de ind
 - **Variaciones con signo de desempeño: positivo = mejora** (sprint: bajar el tiempo es +). Al armar el contexto del LLM (Fase 5) etiquetarlo así y ajustar el ejemplo de `/prompts`.
 - Umbrales de disparo: ACWR > ACWR_ALTO, caída CMJ > CAIDA_CMJ_PCT, bienestar < BIENESTAR_BAJO. Bienestar: los 4 ítems orientados 5 = mejor (índice 4-20).
 
+## Fase 4 — K-means (hechos)
+- Jornadas `pre` reales (decisión del usuario, 16/10/2026): **28/09 para salto** (SALTO_*) y **07/10 para velocidad y resistencia** (SPRINT_20M, NAVETTE). Reclasificadas con advertencia confirmada; bitácora con id_usuario NULL.
+- `POST /analitica/clustering` (solo admin; body `modo` principal|exploratorio, `fecha_desde`, `fecha_hasta` opcionales) toma la ÚLTIMA medición válida de cada variable en el rango y guarda las jornadas usadas por jugador. Variables, k candidatos, random_state y silueta mínima salen de `configuracion_sistema`.
+- Clusters renumerados de mejor (0) a peor perfil global; etiquetas por dimensión (velocidad/resistencia/salto) con z orientado y umbral ±0.5. Se advierte silueta < mínimo, grupos de un solo jugador, sin asignar y el carácter descriptivo (no predictivo).
+- `GET /analitica/clustering/ultimo` y `/analitica/clustering` (historial): ambos roles, solo códigos J-xx. `GET /jugadores/{id}/cluster` (solo entrenador) alimentará el contexto de la IA.
+- Los atípicos `pendiente_confirmacion` NO entran al K-means (el jugador queda sin asignar hasta confirmarlos).
+- Con los datos migrados no hay CMJ ni SJ: el modo `principal` falla con 422 explicativo; usar `exploratorio` (SPRINT_20M, NAVETTE, SALTO_AI). Ejecución real nº 1 (exploratorio): k=4, silueta 0.349, un grupo unitario; J-07 sin asignar por atípico pendiente.
+- Migración 0002: `ejecucion_clustering.diagnostico` (JSON) y fechas desde/hasta como DATE.
+
 ## Convenciones
 - Marcas de tiempo (DATETIME) se guardan en **UTC** (`app.core.security.utcnow`); las fechas de negocio (`DATE`) son locales de Perú.
 - Columnas generadas de MariaDB (`srpe`, `indice_bienestar`, `es_alerta`) no admiten NOT NULL: son nullable en el esquema.

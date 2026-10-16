@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
     JSON,
     BigInteger,
+    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -82,8 +83,8 @@ class EjecucionClustering(Base):
     fecha_hora: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     # Spec original: FK a una jornada. Como el K-means toma la última medición dentro de un
     # rango de fechas (CLAUDE.md), se guarda el rango y las jornadas usadas por jugador.
-    fecha_desde: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    fecha_hasta: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    fecha_desde: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fecha_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
     id_jornada: Mapped[int | None] = mapped_column(
         ForeignKey("jornada_evaluacion.id_jornada"), nullable=True
     )
@@ -93,6 +94,8 @@ class EjecucionClustering(Base):
     centroides: Mapped[list] = mapped_column(JSON)
     etiquetas: Mapped[dict] = mapped_column(JSON)
     jornadas_usadas: Mapped[dict | None] = mapped_column(JSON)
+    # modo, silueta por k, advertencias y jugadores sin asignar
+    diagnostico: Mapped[dict | None] = mapped_column(JSON)
     id_usuario: Mapped[int] = mapped_column(ForeignKey("usuario.id_usuario"))
 
 
