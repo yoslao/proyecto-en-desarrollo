@@ -1,0 +1,38 @@
+# Secretos
+.env
+*.gpg
+*.sql
+*.sql.gz
+
+# Datos reales de jugadores (Ley 29733): nunca al repositorio
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+design-reference/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# IDE / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Respaldos locales
+backups/

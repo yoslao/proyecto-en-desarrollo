@@ -1,0 +1,27 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: voleyia-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?defina DB_ROOT_PASSWORD en .env}
+      MARIADB_DATABASE: ${DB_NAME:-voleyia}
+      MARIADB_USER: ${DB_USER:-voleyia}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD en .env}
+      TZ: America/Lima
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-storage-engine=InnoDB
+    ports:
+      - "127.0.0.1:${DB_PORT:-3306}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
